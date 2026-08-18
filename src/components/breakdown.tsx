@@ -1,6 +1,7 @@
 "use client";
 
-import { motion } from "motion/react";
+import { motion, useReducedMotion } from "motion/react";
+import { entranceProps } from "@/components/ui/motion";
 import type { FieldSummary, Note } from "@/lib/cron/describe";
 import type { Cadence, Overlap } from "@/lib/cron/schedule";
 import { formatGap } from "@/lib/cron/schedule";
@@ -15,6 +16,8 @@ interface BreakdownProps {
 }
 
 export function Breakdown({ fields, notes, cadence, overlap, jobMinutes }: BreakdownProps) {
+  const reduce = useReducedMotion();
+
   return (
     <div className="h-full overflow-auto">
       <table className="w-full">
@@ -22,9 +25,7 @@ export function Breakdown({ fields, notes, cadence, overlap, jobMinutes }: Break
           {fields.map((field, index) => (
             <motion.tr
               key={field.label}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.2, delay: index * 0.03 }}
+              {...entranceProps(reduce, { index, distance: 0, duration: 0.2, step: 0.03 })}
               className="border-b border-line"
             >
               <td className="w-24 px-4 py-2 text-[11px] uppercase tracking-wider text-subtle">
@@ -47,8 +48,7 @@ export function Breakdown({ fields, notes, cadence, overlap, jobMinutes }: Break
 
       {overlap.overlaps && overlap.shortestGapMinutes !== null && (
         <motion.p
-          initial={{ opacity: 0, y: 6 }}
-          animate={{ opacity: 1, y: 0 }}
+          {...entranceProps(reduce, { distance: 6 })}
           className="m-3 rounded-lg border border-err/40 bg-err/[0.07] p-3 text-xs text-muted"
         >
           Runs are {formatGap(overlap.shortestGapMinutes)} apart, but the job takes {jobMinutes} min.

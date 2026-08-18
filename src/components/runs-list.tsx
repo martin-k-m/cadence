@@ -1,6 +1,7 @@
 "use client";
 
-import { motion } from "motion/react";
+import { motion, useReducedMotion } from "motion/react";
+import { entranceProps } from "@/components/ui/motion";
 import type { Run } from "@/lib/cron/schedule";
 import { relativeTime } from "@/lib/cron/schedule";
 import { EmptyState } from "@/components/ui/controls";
@@ -16,6 +17,8 @@ interface RunsListProps {
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 export function RunsList({ runs, timeZone, now, showUtc }: RunsListProps) {
+  const reduce = useReducedMotion();
+
   if (runs.length === 0) {
     return (
       <EmptyState
@@ -38,9 +41,7 @@ export function RunsList({ runs, timeZone, now, showUtc }: RunsListProps) {
         return (
           <motion.li
             key={run.instant.toISOString()}
-            initial={{ opacity: 0, x: -6 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.24, delay: Math.min(index, 12) * 0.025 }}
+            {...entranceProps(reduce, { index, axis: "x", distance: -6, duration: 0.24, step: 0.025 })}
           >
             {newDay && (
               <div className="sticky top-0 z-10 flex items-baseline gap-2 border-y border-line bg-raised px-4 py-1">
