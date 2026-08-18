@@ -69,11 +69,14 @@ jobs:
           # [skip ci] so a screenshot does not trigger the run that regenerates it.
           git commit -m "Update the screenshot [skip ci]"
 
+          # The checkout is a detached HEAD at the commit CI validated, so the
+          # branch has to be named on the push.
           for attempt in 1 2 3; do
-            if git push; then
+            if git push origin HEAD:main; then
               exit 0
             fi
             echo "Push rejected; rebasing onto origin/main (attempt ${attempt})."
-            git pull --rebase --autostash origin main
+            git fetch origin main
+            git rebase origin/main
           done
           exit 1
