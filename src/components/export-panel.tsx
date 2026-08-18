@@ -43,6 +43,11 @@ export function ExportPanel({ snippets }: { snippets: Snippet[] }) {
         <pre className="px-4 py-3 font-mono text-[12px] leading-relaxed text-muted">
           {snippet.body}
         </pre>
+        {snippet.notes && (
+          <p className="mx-3 mb-2 rounded-lg border border-line bg-raised p-3 text-xs text-muted">
+            {snippet.notes}
+          </p>
+        )}
         {snippet.caveat && (
           <p className="mx-3 mb-3 rounded-lg border border-warn/40 bg-warn/[0.07] p-3 text-xs text-muted">
             {snippet.caveat}

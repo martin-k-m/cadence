@@ -8,7 +8,8 @@ import {
   previousRun,
   relativeTime,
 } from "./schedule";
-import { snippetsFor } from "./export";
+import { snippetsFor, toSystemd } from "./export";
+import { DEFAULT_BUILDER, fromExpression, toExpression, type BuilderState } from "./builder";
 import { describeCron, scheduleNotes, summariseFields } from "./describe";
 import { zonedParts } from "@/lib/zones";
 
@@ -283,5 +284,78 @@ describe("snippetsFor", () => {
     expect(k8s?.body).toContain('schedule: "30 9 * * 1-5"');
     expect(k8s?.body).toContain('timeZone: "Asia/Tokyo"');
     expect(k8s?.body).toContain("concurrencyPolicy: Forbid");
+  });
+});
+
+describe("builder", () => {
+  const roundTrip = (state: BuilderState) => fromExpression(parseCron(toExpression(state)));
+
+  it("writes an expression for each frequency", () => {
+    expect(toExpression({ ...DEFAULT_BUILDER, frequency: "minutes", everyN: 5 })).toBe("*/5 * * * *");
+    expect(toExpression({ ...DEFAULT_BUILDER, frequency: "hourly", everyN: 2, minute: 15 })).toBe("15 */2 * * *");
+    expect(toExpression({ ...DEFAULT_BUILDER, frequency: "daily", hour: 3, minute: 30 })).toBe("30 3 * * *");
+    expect(
+      toExpression({ ...DEFAULT_BUILDER, frequency: "weekly", hour: 8, minute: 0, weekdays: [1, 3] }),
+    ).toBe("0 8 * * 1,3");
+    expect(
+      toExpression({ ...DEFAULT_BUILDER, frequency: "monthly", hour: 0, minute: 0, dayOfMonth: 15 }),
+    ).toBe("0 0 15 * *");
+  });
+
+  it("collapses a step of one back to a wildcard", () => {
+    expect(toExpression({ ...DEFAULT_BUILDER, frequency: "minutes", everyN: 1 })).toBe("* * * * *");
+    expect(toExpression({ ...DEFAULT_BUILDER, frequency: "hourly", everyN: 1, minute: 0 })).toBe("0 * * * *");
+  });
+
+  it("round-trips every shape it can build", () => {
+    const states: BuilderState[] = [
+      { ...DEFAULT_BUILDER, frequency: "minutes", everyN: 15 },
+      { ...DEFAULT_BUILDER, frequency: "hourly", everyN: 6, minute: 5 },
+      { ...DEFAULT_BUILDER, frequency: "daily", hour: 23, minute: 45 },
+      { ...DEFAULT_BUILDER, frequency: "weekly", hour: 8, minute: 0, weekdays: [0, 6] },
+      { ...DEFAULT_BUILDER, frequency: "monthly", hour: 4, minute: 0, dayOfMonth: 28 },
+    ];
+
+    for (const state of states) {
+      const read = roundTrip(state);
+      expect(read?.frequency, state.frequency).toBe(state.frequency);
+      expect(toExpression(read!), state.frequency).toBe(toExpression(state));
+    }
+  });
+
+  it("declines expressions richer than its controls", () => {
+    // Cron's OR rule; a restricted month; scattered values.
+    expect(fromExpression(parseCron("0 0 13 * FRI"))).toBeNull();
+    expect(fromExpression(parseCron("0 0 1 1 *"))).toBeNull();
+    expect(fromExpression(parseCron("0 9,17 * * *"))).toBeNull();
+    expect(fromExpression(parseCron("*/5 9-17 * * *"))).toBeNull();
+  });
+});
+
+describe("toSystemd", () => {
+  it("translates a weekday schedule into OnCalendar", () => {
+    const snippet = toSystemd(parseCron("30 9 * * 1-5"), "UTC");
+    expect(snippet.body).toContain("OnCalendar=Mon,Tue,Wed,Thu,Fri *-*-* 09:30:00");
+    expect(snippet.body).toContain("Persistent=true");
+    expect(snippet.body).not.toContain("Timezone=");
+  });
+
+  it("keeps the step shape for an interval", () => {
+    expect(toSystemd(parseCron("*/15 * * * *"), "UTC").body).toContain("OnCalendar=*-*-* *:00/15:00");
+  });
+
+  it("adds Timezone for a schedule that is not UTC", () => {
+    const snippet = toSystemd(parseCron("0 3 * * *"), "Europe/Madrid");
+    expect(snippet.body).toContain("Timezone=Europe/Madrid");
+    expect(snippet.notes).toContain("systemd 251");
+  });
+
+  it("warns that systemd ANDs the day fields where cron ORs them", () => {
+    const snippet = toSystemd(parseCron("0 0 13 * FRI"), "UTC");
+    expect(snippet.notes).toContain("cron fires when either matches, systemd only when both do");
+  });
+
+  it("offers the command that checks the result", () => {
+    expect(toSystemd(parseCron("0 3 1 * *"), "UTC").notes).toContain("systemd-analyze calendar");
   });
 });

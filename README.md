@@ -31,6 +31,13 @@ Runs entirely in the browser.
   while GitHub Actions is UTC-only. Rather than emit a shifted expression that
   silently breaks at each daylight saving change, cadence keeps the original and
   says so.
+- **A two-way builder.** Compose a schedule from controls and it writes the
+  expression; type an expression and the controls follow it — unless it says more
+  than they can represent, in which case they detach and say so rather than
+  showing an approximation you might then edit.
+- **systemd timer export**, which surfaces a genuine semantic difference: cron
+  fires when *either* day field matches, systemd `OnCalendar` only when *both*
+  do. Where that applies, the note says the translation is not equivalent.
 - **Permalinks** — the expression and timezone live in the URL fragment.
 - **Common schedules** behind `⌘K` / `Ctrl-K`.
 - **Precise errors** — `0 25 * * *` reports "hour must be between 0 and 23, got
@@ -73,7 +80,8 @@ src/
     schedule.ts  next fire times in a timezone, cadence, relative times
     describe.ts  the English sentence, field summaries, warnings
     presets.ts   common schedules
-    export.ts    GitHub Actions and Kubernetes snippets
+    export.ts    GitHub Actions, Kubernetes and systemd snippets
+    builder.ts   the schedule shapes the controls can express, both ways
   lib/zones.ts   Intl-based timezone conversion
   components/    expression field, run list, breakdown, palette
 ```

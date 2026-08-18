@@ -13,6 +13,8 @@ import { CronError, parseCron, type CronExpression } from "@/lib/cron/parse";
 import { describeCadence, detectOverlap, nextRuns, previousRun, relativeTime } from "@/lib/cron/schedule";
 import { snippetsFor } from "@/lib/cron/export";
 import { ExportPanel } from "@/components/export-panel";
+import { BuilderPanel } from "@/components/builder-panel";
+import { DEFAULT_BUILDER, fromExpression, toExpression, type BuilderState } from "@/lib/cron/builder";
 import { describeCron, scheduleNotes, summariseFields } from "@/lib/cron/describe";
 import { isValidZone, localZone } from "@/lib/zones";
 
@@ -25,7 +27,8 @@ export function Cadence() {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [now, setNow] = useState<Date | null>(null);
   const [jobMinutes, setJobMinutes] = useState(0);
-  const [view, setView] = useState<"fields" | "export">("fields");
+  const [view, setView] = useState<"fields" | "build" | "export">("fields");
+  const [builder, setBuilder] = useState<BuilderState>(DEFAULT_BUILDER);
 
   useEffect(() => {
     const shared = new URLSearchParams(window.location.hash.slice(1));
@@ -89,6 +92,17 @@ export function Cadence() {
     [parsed.expr, timeZone],
   );
 
+  // The builder follows the expression whenever the expression is simple enough
+  // to be represented; when it is not, the controls detach rather than lie.
+  const builderFromExpression = useMemo(
+    () => (parsed.expr ? fromExpression(parsed.expr) : null),
+    [parsed.expr],
+  );
+
+  useEffect(() => {
+    if (builderFromExpression) setBuilder(builderFromExpression);
+  }, [builderFromExpression]);
+
   const fields = useMemo(() => (parsed.expr ? summariseFields(parsed.expr) : []), [parsed.expr]);
   const notes = useMemo(() => (parsed.expr ? scheduleNotes(parsed.expr) : []), [parsed.expr]);
   const description = parsed.expr ? describeCron(parsed.expr) : null;
@@ -137,7 +151,13 @@ export function Cadence() {
 
           <Panel
             order={1}
-            title={view === "fields" ? "What each field means" : "Use it elsewhere"}
+            title={
+              view === "fields"
+                ? "What each field means"
+                : view === "build"
+                  ? "Build a schedule"
+                  : "Use it elsewhere"
+            }
             className="min-h-0 flex-1"
             actions={
               <div className="flex items-center gap-2">
@@ -148,17 +168,33 @@ export function Cadence() {
                   onChange={setView}
                   options={[
                     { value: "fields", label: "Fields" },
+                    { value: "build", label: "Build" },
                     { value: "export", label: "Export" },
                   ]}
                 />
               </div>
             }
           >
-            {view === "fields" ? (
-              <Breakdown fields={fields} notes={notes} cadence={cadence} overlap={overlap} jobMinutes={jobMinutes} />
-            ) : (
-              <ExportPanel snippets={snippets} />
+            {view === "fields" && (
+              <Breakdown
+                fields={fields}
+                notes={notes}
+                cadence={cadence}
+                overlap={overlap}
+                jobMinutes={jobMinutes}
+              />
             )}
+            {view === "build" && (
+              <BuilderPanel
+                state={builder}
+                detached={builderFromExpression === null}
+                onChange={(next) => {
+                  setBuilder(next);
+                  setExpression(toExpression(next));
+                }}
+              />
+            )}
+            {view === "export" && <ExportPanel snippets={snippets} />}
           </Panel>
         </div>
 
