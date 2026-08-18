@@ -77,6 +77,21 @@ src/
   components/    expression field, run list, breakdown, palette
 ```
 
+## Deploy
+
+Static, client-only and free of environment variables, so it deploys as-is.
+
+Import the repository once and every push to `main` ships automatically:
+
+```bash
+npx vercel login
+npx vercel link --repo martin-k-m/cadence
+npx vercel --prod
+```
+
+Or import it through the dashboard:
+<https://vercel.com/import/git?s=https://github.com/martin-k-m/cadence>
+
 ## Development
 
 ```bash
