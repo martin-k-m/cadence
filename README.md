@@ -4,6 +4,7 @@
 
 [![CI](https://github.com/martin-k-m/cadence/actions/workflows/ci.yml/badge.svg)](https://github.com/martin-k-m/cadence/actions/workflows/ci.yml)
 [![licence: MIT](https://img.shields.io/badge/licence-MIT-blue.svg)](LICENSE)
+[![live](https://img.shields.io/badge/live-martin--k--m.github.io-brightgreen.svg)](https://martin-k-m.github.io/cadence/)
 
 Paste a cron expression, read it back in plain English, and see exactly when it
 will fire — in the timezone the schedule actually runs in, daylight saving
@@ -79,9 +80,14 @@ src/
 
 ## Deploy
 
-Static, client-only and free of environment variables, so it deploys as-is.
+**Live: <https://martin-k-m.github.io/cadence/>**
 
-Import the repository once and every push to `main` ships automatically:
+Static, client-only and free of environment variables. Every push to `main`
+rebuilds and republishes it through the Pages workflow; `next.config.ts` switches
+to `output: "export"` with a `/cadence` base path only when `GITHUB_PAGES` is set,
+so local development is unaffected.
+
+To host it on Vercel instead:
 
 ```bash
 npx vercel login
