@@ -5,7 +5,7 @@
 [![CI](https://github.com/martin-k-m/cadence/actions/workflows/ci.yml/badge.svg)](https://github.com/martin-k-m/cadence/actions/workflows/ci.yml)
 [![licence: MIT](https://img.shields.io/badge/licence-MIT-blue.svg)](LICENSE)
 [![live](https://img.shields.io/badge/live-martin--k--m.github.io-brightgreen.svg)](https://martin-k-m.github.io/cadence/)
-[![tests](https://img.shields.io/badge/tests-42%20passing-brightgreen.svg)](src/lib)
+[![tests](https://img.shields.io/badge/tests-0%20passing-brightgreen.svg)](src/lib)
 [![builder](https://img.shields.io/badge/builder-two--way-b45309.svg)](#what-it-does)
 [![export](https://img.shields.io/badge/export-Actions%20%C2%B7%20Kubernetes%20%C2%B7%20systemd-b45309.svg)](#what-it-does)
 [![warns](https://img.shields.io/badge/warns-OR%20rule%20%C2%B7%20DST%20%C2%B7%20overlap-b45309.svg)](#the-traps-it-warns-about)

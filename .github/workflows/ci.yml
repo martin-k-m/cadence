@@ -17,6 +17,9 @@ jobs:
     # Pinned so a run cannot pass or fail because of the runner's own clock.
     env:
       TZ: UTC
+    permissions:
+      # The badge step writes back to the repository.
+      contents: write
 
     steps:
       - uses: actions/checkout@v4
@@ -36,7 +39,41 @@ jobs:
         run: npm run typecheck
 
       - name: Test
-        run: npm test
+        run: npm test -- --reporter=default --reporter=json --outputFile=test-results.json
 
       - name: Build
         run: npm run build
+
+      # A count maintained by hand is a count that goes stale, so it is taken
+      # from the run that just happened. Pull requests are excluded: a CI run
+      # must not rewrite the branch it is only meant to be checking.
+      - name: Update the test-count badge
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          count="$(node -p "require('./test-results.json').numPassedTests")"
+          current="$(grep -oE 'tests-[0-9]+%20passing' README.md | head -1 | grep -oE '[0-9]+' || true)"
+
+          if [ "${count}" = "${current}" ]; then
+            echo "Badge already reads ${count} passing; nothing to do."
+            exit 0
+          fi
+
+          echo "Updating badge: ${current:-none} -> ${count}"
+          sed -i -E "s/tests-[0-9]+%20passing/tests-${count}%20passing/" README.md
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add README.md
+          # [skip ci] stops this commit starting a run that would find nothing
+          # left to change.
+          git commit -m "Update the test-count badge to ${count} [skip ci]"
+
+          # Another push may have landed while the suite was running.
+          for attempt in 1 2 3; do
+            if git push; then
+              exit 0
+            fi
+            echo "Push rejected; rebasing onto origin/main (attempt ${attempt})."
+            git pull --rebase --autostash origin main
+          done
+          exit 1
