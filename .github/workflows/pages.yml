@@ -1,7 +1,12 @@
 name: Deploy to Pages
 
+# Publishing follows CI rather than the push itself, so a red build never
+# reaches the live site. workflow_run fires once CI concludes; the conclusion is
+# then checked below, because "completed" includes failure and cancellation.
 on:
-  push:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
     branches: [main]
   workflow_dispatch:
 
@@ -18,13 +23,21 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
     env:
       TZ: UTC
       # Switches next.config.ts to a static export served from /<repo>.
       GITHUB_PAGES: "true"
 
     steps:
+      # A workflow_run event starts from the default branch, so the commit CI
+      # actually validated has to be named explicitly — otherwise a later push
+      # could be published on the strength of an earlier commit's green run.
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.ref }}
 
       - uses: actions/setup-node@v4
         with:
