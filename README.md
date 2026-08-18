@@ -10,6 +10,10 @@
 [![export](https://img.shields.io/badge/export-Actions%20%C2%B7%20Kubernetes%20%C2%B7%20systemd-b45309.svg)](#what-it-does)
 [![warns](https://img.shields.io/badge/warns-OR%20rule%20%C2%B7%20DST%20%C2%B7%20overlap-b45309.svg)](#the-traps-it-warns-about)
 
+[![cadence screenshot](docs/screenshot.png)](https://martin-k-m.github.io/cadence/)
+
+<sub>A weekday schedule read back in English, broken down field by field, with the next runs and their countdowns. <a href="https://martin-k-m.github.io/cadence/">Try it</a>.</sub>
+
 Paste a cron expression, read it back in plain English, and see exactly when it
 will fire — in the timezone the schedule actually runs in, daylight saving
 included.
