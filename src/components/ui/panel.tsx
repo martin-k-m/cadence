@@ -35,7 +35,7 @@ export function Panel({
         <header className="flex shrink-0 items-center justify-between gap-3 border-b border-line px-4 py-2.5">
           <div className="flex min-w-0 items-baseline gap-2">
             {title && (
-              <h2 className="text-[13px] font-medium tracking-wide text-fg">{title}</h2>
+              <h2 className="whitespace-nowrap text-[13px] font-medium tracking-wide text-fg">{title}</h2>
             )}
             {hint && <p className="truncate text-xs text-subtle">{hint}</p>}
           </div>
