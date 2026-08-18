@@ -1,0 +1,19 @@
+# Line endings are a property of this repository, not of whoever checked it out.
+# Every text file is stored and checked out as LF regardless of the platform or
+# the local core.autocrlf setting, so diffs stay free of whole-file churn when
+# the project moves between machines.
+* text=auto eol=lf
+
+# Binary formats must never be normalised.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.webp binary
+*.woff binary
+*.woff2 binary
+*.pdf binary
+
+# Generated, and noisy in review.
+package-lock.json linguist-generated=true
