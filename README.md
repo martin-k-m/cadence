@@ -2,6 +2,9 @@
 
 *What the app actually computes: how often a thing happens.*
 
+[![CI](https://github.com/martin-k-m/cadence/actions/workflows/ci.yml/badge.svg)](https://github.com/martin-k-m/cadence/actions/workflows/ci.yml)
+[![licence: MIT](https://img.shields.io/badge/licence-MIT-blue.svg)](LICENSE)
+
 Paste a cron expression, read it back in plain English, and see exactly when it
 will fire — in the timezone the schedule actually runs in, daylight saving
 included.
