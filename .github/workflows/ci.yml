@@ -51,7 +51,9 @@ jobs:
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
           count="$(node -p "require('./test-results.json').numPassedTests")"
-          current="$(grep -oE 'tests-[0-9]+%20passing' README.md | head -1 | grep -oE '[0-9]+' || true)"
+          # Capture only the count. Matching every run of digits would also pick
+          # up the 20 in the %20 that encodes the space.
+          current="$(sed -nE 's/.*tests-([0-9]+)%20passing.*/\1/p' README.md | head -1)"
 
           if [ "${count}" = "${current}" ]; then
             echo "Badge already reads ${count} passing; nothing to do."
@@ -60,6 +62,12 @@ jobs:
 
           echo "Updating badge: ${current:-none} -> ${count}"
           sed -i -E "s/tests-[0-9]+%20passing/tests-${count}%20passing/" README.md
+
+          # Belt and braces: never let an empty diff fail the build.
+          if git diff --quiet -- README.md; then
+            echo "README already up to date."
+            exit 0
+          fi
 
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
