@@ -35,8 +35,14 @@ export function Cadence() {
   const [now, setNow] = useState<Date | null>(null);
   const [jobMinutes, setJobMinutes] = useState(0);
   const [view, setView] = useState<"fields" | "build" | "export">("fields");
-  const [builder, setBuilder] = useState<BuilderState>(DEFAULT_BUILDER);
+  // Only the user's own edits are stored; whatever the expression itself says
+  // takes precedence, so there is no state to keep in sync with it.
+  const [builderEdit, setBuilderEdit] = useState<BuilderState>(DEFAULT_BUILDER);
 
+  // The viewer's timezone and clock exist only in the browser. Reading them
+  // during render would make the server's markup and the client's first render
+  // disagree, so they are adopted after mount on purpose.
+  /* eslint-disable react-hooks/set-state-in-effect -- see the note above */
   useEffect(() => {
     const shared = new URLSearchParams(window.location.hash.slice(1));
     const sharedExpression = shared.get("e");
@@ -49,6 +55,7 @@ export function Cadence() {
     const timer = setInterval(() => setNow(new Date()), 30_000);
     return () => clearInterval(timer);
   }, []);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -106,9 +113,7 @@ export function Cadence() {
     [parsed.expr],
   );
 
-  useEffect(() => {
-    if (builderFromExpression) setBuilder(builderFromExpression);
-  }, [builderFromExpression]);
+  const builder = builderFromExpression ?? builderEdit;
 
   // The input gives a wall-clock string; it is judged in the schedule's own
   // timezone, which is the only reading that answers the question honestly.
@@ -217,7 +222,7 @@ export function Cadence() {
                 state={builder}
                 detached={builderFromExpression === null}
                 onChange={(next) => {
-                  setBuilder(next);
+                  setBuilderEdit(next);
                   setExpression(toExpression(next));
                 }}
               />

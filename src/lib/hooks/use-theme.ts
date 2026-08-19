@@ -1,31 +1,42 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useSyncExternalStore } from "react";
 
 export type Theme = "dark" | "light";
 
 const STORAGE_KEY = "cadence.theme";
 
-/** Reads the theme the inline boot script already applied, then keeps it in sync. */
-export function useTheme(): [Theme, () => void] {
-  const [theme, setTheme] = useState<Theme>("dark");
+/**
+ * The applied theme lives on the document element, put there by the boot script
+ * before first paint. Reading it through useSyncExternalStore rather than
+ * copying it into state in an effect means there is no render with the wrong
+ * value, and no cascading re-render to correct it.
+ */
+function subscribe(onChange: () => void): () => void {
+  const observer = new MutationObserver(onChange);
+  observer.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ["data-theme"],
+  });
+  return () => observer.disconnect();
+}
 
-  useEffect(() => {
-    const applied = document.documentElement.dataset.theme;
-    setTheme(applied === "light" ? "light" : "dark");
-  }, []);
+function readTheme(): Theme {
+  return document.documentElement.dataset.theme === "light" ? "light" : "dark";
+}
+
+export function useTheme(): [Theme, () => void] {
+  // The server has no document; dark is what the markup is rendered against.
+  const theme = useSyncExternalStore(subscribe, readTheme, () => "dark" as Theme);
 
   const toggle = useCallback(() => {
-    setTheme((current) => {
-      const next: Theme = current === "dark" ? "light" : "dark";
-      document.documentElement.dataset.theme = next;
-      try {
-        localStorage.setItem(STORAGE_KEY, next);
-      } catch {
-        // Private browsing modes can refuse storage; the toggle still works.
-      }
-      return next;
-    });
+    const next: Theme = readTheme() === "dark" ? "light" : "dark";
+    document.documentElement.dataset.theme = next;
+    try {
+      localStorage.setItem(STORAGE_KEY, next);
+    } catch {
+      // Private browsing modes can refuse storage; the toggle still works.
+    }
   }, []);
 
   return [theme, toggle];

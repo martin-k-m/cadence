@@ -28,15 +28,18 @@ export function RunsList({ runs, timeZone, now, showUtc }: RunsListProps) {
     );
   }
 
-  let previousDay = "";
+  // Derived rather than accumulated in a mutable variable: rendering must not
+  // depend on how many times React chose to run it.
+  const dayKeys = runs.map((run) => {
+    const parts = zonedParts(timeZone, run.instant);
+    return `${parts.year}-${parts.month}-${parts.day}`;
+  });
 
   return (
     <ol className="h-full overflow-auto">
       {runs.map((run, index) => {
         const parts = zonedParts(timeZone, run.instant);
-        const dayKey = `${parts.year}-${parts.month}-${parts.day}`;
-        const newDay = dayKey !== previousDay;
-        previousDay = dayKey;
+        const newDay = dayKeys[index] !== dayKeys[index - 1];
 
         return (
           <motion.li

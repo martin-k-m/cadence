@@ -13,7 +13,7 @@ interface PresetPaletteProps {
 
 export function PresetPalette({ open, onClose, onPick }: PresetPaletteProps) {
   const [query, setQuery] = useState("");
-  const [cursor, setCursor] = useState(0);
+  const [rawCursor, setCursor] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const dialogRef = useDialog(open, onClose);
 
@@ -25,6 +25,9 @@ export function PresetPalette({ open, onClose, onPick }: PresetPaletteProps) {
     );
   }, [query]);
 
+  // Clearing the previous search belongs to the act of opening, which is an
+  // event outside React's render cycle.
+  /* eslint-disable react-hooks/set-state-in-effect -- see the note above */
   useEffect(() => {
     if (!open) return;
     setQuery("");
@@ -32,10 +35,12 @@ export function PresetPalette({ open, onClose, onPick }: PresetPaletteProps) {
     const frame = requestAnimationFrame(() => inputRef.current?.focus());
     return () => cancelAnimationFrame(frame);
   }, [open]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
-  useEffect(() => {
-    setCursor((current) => Math.min(current, Math.max(0, results.length - 1)));
-  }, [results.length]);
+  // Clamped as it is read: a filter that shortens the list must not leave the
+  // selection pointing past the end, and correcting it in an effect would
+  // render the bad state first.
+  const cursor = Math.min(rawCursor, Math.max(0, results.length - 1));
 
   const commit = (preset: Preset | undefined) => {
     if (!preset) return;
