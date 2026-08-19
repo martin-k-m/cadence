@@ -5,6 +5,7 @@ import {
   detectOverlap,
   formatGap,
   nextRuns,
+  firesAt,
   previousRun,
   relativeTime,
 } from "./schedule";
@@ -357,5 +358,51 @@ describe("toSystemd", () => {
 
   it("offers the command that checks the result", () => {
     expect(toSystemd(parseCron("0 3 1 * *"), "UTC").notes).toContain("systemd-analyze calendar");
+  });
+});
+
+describe("firesAt", () => {
+  const weekdayMorning = parseCron("30 9 * * 1-5");
+
+  it("confirms a matching instant", () => {
+    const check = firesAt(weekdayMorning, new Date("2026-08-18T09:30:00Z"), utc);
+    expect(check.fires).toBe(true);
+    expect(check.blockedBy).toEqual([]);
+  });
+
+  it("names the field that blocked it", () => {
+    expect(firesAt(weekdayMorning, new Date("2026-08-18T09:31:00Z"), utc).blockedBy).toEqual(["minute"]);
+    expect(firesAt(weekdayMorning, new Date("2026-08-18T10:30:00Z"), utc).blockedBy).toEqual(["hour"]);
+    expect(firesAt(weekdayMorning, new Date("2026-08-22T09:30:00Z"), utc).blockedBy).toEqual(["dayOfWeek"]);
+  });
+
+  it("lists every field that failed, not just the first", () => {
+    const check = firesAt(weekdayMorning, new Date("2026-08-22T11:07:00Z"), utc);
+    expect(check.blockedBy).toEqual(["minute", "hour", "dayOfWeek"]);
+    expect(check.fires).toBe(false);
+  });
+
+  it("judges the instant in the schedule's timezone", () => {
+    const instant = new Date("2026-08-18T13:30:00Z"); // 09:30 in New York
+    expect(firesAt(weekdayMorning, instant, newYork).fires).toBe(true);
+    expect(firesAt(weekdayMorning, instant, utc).fires).toBe(false);
+  });
+
+  it("reports both day fields together when cron ORs them", () => {
+    const orRule = parseCron("0 0 13 * FRI");
+    // The 13th, a Sunday: the day-of-month field carries it.
+    expect(firesAt(orRule, new Date("2026-09-13T00:00:00Z"), utc).fires).toBe(true);
+    // A Friday that is not the 13th: the weekday field carries it.
+    expect(firesAt(orRule, new Date("2026-09-18T00:00:00Z"), utc).fires).toBe(true);
+    // Neither: both are reported, because either could have saved it.
+    expect(firesAt(orRule, new Date("2026-09-17T00:00:00Z"), utc).blockedBy).toEqual([
+      "dayOfMonth",
+      "dayOfWeek",
+    ]);
+  });
+
+  it("returns the local clock it judged", () => {
+    const check = firesAt(weekdayMorning, new Date("2026-08-18T13:30:00Z"), newYork);
+    expect(check.local).toMatchObject({ hour: 9, minute: 30, day: 18, month: 8 });
   });
 });

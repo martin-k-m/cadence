@@ -1,5 +1,5 @@
 import { instantFromWallClock, zonedParts } from "@/lib/zones";
-import { dayMatches, type CronExpression } from "./parse";
+import { dayMatches, type CronExpression, type FieldName } from "./parse";
 
 export interface Run {
   instant: Date;
@@ -183,4 +183,49 @@ export function detectOverlap(runs: Run[], jobMinutes: number): Overlap {
   }
 
   return { shortestGapMinutes: shortest, overlaps: shortest < jobMinutes };
+}
+
+export interface FireCheck {
+  fires: boolean;
+  /** Fields that did not match, in the order cron evaluates them. */
+  blockedBy: FieldName[];
+  /** Local wall clock the instant was judged against. */
+  local: { hour: number; minute: number; weekday: number; day: number; month: number };
+}
+
+/**
+ * Whether the schedule fires at a given instant, and if not, which fields stood
+ * in the way. "Why did this not run?" is the question people actually arrive
+ * with, and a list of next runs does not answer it.
+ */
+export function firesAt(
+  expr: CronExpression,
+  instant: Date,
+  timeZone: string,
+): FireCheck {
+  const local = zonedParts(timeZone, instant);
+  const blockedBy: FieldName[] = [];
+
+  if (!expr.minute.values.includes(local.minute)) blockedBy.push("minute");
+  if (!expr.hour.values.includes(local.hour)) blockedBy.push("hour");
+  if (!expr.month.values.includes(local.month)) blockedBy.push("month");
+
+  // The two day fields are judged together, because cron ORs them when both are
+  // restricted; reporting them separately would be misleading.
+  if (!dayMatches(expr, local.day, local.weekday)) {
+    if (expr.dayOfMonth.restricted) blockedBy.push("dayOfMonth");
+    if (expr.dayOfWeek.restricted) blockedBy.push("dayOfWeek");
+  }
+
+  return {
+    fires: blockedBy.length === 0,
+    blockedBy,
+    local: {
+      hour: local.hour,
+      minute: local.minute,
+      weekday: local.weekday,
+      day: local.day,
+      month: local.month,
+    },
+  };
 }

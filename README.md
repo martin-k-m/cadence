@@ -31,6 +31,9 @@ Runs entirely in the browser.
   active at all.
 - **Warnings for the traps**, described below.
 - **The last run as well as the next**, so "did it fire?" is answered too.
+- **"Would it fire at…?"** Pick any moment and get a straight answer, and when
+  the answer is no, exactly which fields blocked it — the question people
+  actually arrive with, which a list of future runs does not address.
 - **Overlap detection.** Tell it how long the job takes and it compares that
   against the *shortest* gap between runs — a five-minute schedule running an
   eight-minute job piles up, and cron will not warn you.

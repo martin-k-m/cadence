@@ -7,9 +7,26 @@ const sans = Inter({ subsets: ["latin"], variable: "--font-sans-face", display: 
 const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono-face", display: "swap" });
 
 export const metadata: Metadata = {
+  // Absolute URLs are required for social previews, and a static export has no
+  // request to infer the origin from.
+  metadataBase: new URL("https://martin-k-m.github.io/cadence/"),
   title: "cadence — cron schedules, explained and previewed",
-  description:
-    "Explain any cron expression in plain English and preview its next runs in the timezone the schedule actually uses, daylight saving included.",
+  description: "Explain any cron expression in plain English and preview its next runs in the timezone the schedule actually uses, daylight saving included.",
+  applicationName: "cadence",
+  openGraph: {
+    title: "cadence",
+    description: "Cron schedules, read back in English and previewed to the minute.",
+    url: "https://martin-k-m.github.io/cadence/",
+    siteName: "cadence",
+    images: [{ url: "https://raw.githubusercontent.com/martin-k-m/cadence/main/docs/screenshot.png", width: 2760, height: 1700, alt: "cadence in use" }],
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "cadence",
+    description: "Cron schedules, read back in English and previewed to the minute.",
+    images: ["https://raw.githubusercontent.com/martin-k-m/cadence/main/docs/screenshot.png"],
+  },
 };
 
 export const viewport: Viewport = {

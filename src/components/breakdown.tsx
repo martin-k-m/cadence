@@ -3,7 +3,8 @@
 import { motion, useReducedMotion } from "motion/react";
 import { entranceProps } from "@/components/ui/motion";
 import type { FieldSummary, Note } from "@/lib/cron/describe";
-import type { Cadence, Overlap } from "@/lib/cron/schedule";
+import { useState } from "react";
+import type { Cadence, FireCheck, Overlap } from "@/lib/cron/schedule";
 import { formatGap } from "@/lib/cron/schedule";
 
 interface BreakdownProps {
@@ -13,9 +14,11 @@ interface BreakdownProps {
   overlap: Overlap;
   /** How long the job is expected to take, in minutes; 0 when unknown. */
   jobMinutes: number;
+  /** Answers "would it have fired then?" for an instant the reader picks. */
+  onCheck: (localDateTime: string) => FireCheck | null;
 }
 
-export function Breakdown({ fields, notes, cadence, overlap, jobMinutes }: BreakdownProps) {
+export function Breakdown({ fields, notes, cadence, overlap, jobMinutes, onCheck }: BreakdownProps) {
   const reduce = useReducedMotion();
 
   return (
@@ -46,6 +49,8 @@ export function Breakdown({ fields, notes, cadence, overlap, jobMinutes }: Break
         </dl>
       )}
 
+      <FireChecker onCheck={onCheck} />
+
       {overlap.overlaps && overlap.shortestGapMinutes !== null && (
         <motion.p
           {...entranceProps(reduce, { distance: 6 })}
@@ -75,6 +80,58 @@ export function Breakdown({ fields, notes, cadence, overlap, jobMinutes }: Break
             </motion.li>
           ))}
         </ul>
+      )}
+    </div>
+  );
+}
+
+const FIELD_LABEL: Record<string, string> = {
+  minute: "minute",
+  hour: "hour",
+  dayOfMonth: "day of month",
+  month: "month",
+  dayOfWeek: "day of week",
+};
+
+/**
+ * "Why did it not run at 09:31?" is the question people arrive with, and a list
+ * of future runs does not answer it.
+ */
+function FireChecker({ onCheck }: { onCheck: (localDateTime: string) => FireCheck | null }) {
+  const [value, setValue] = useState("");
+  const result = value ? onCheck(value) : null;
+
+  return (
+    <div className="border-b border-line px-4 py-3">
+      <label className="flex flex-wrap items-center gap-2 text-[11px] uppercase tracking-wider text-subtle">
+        does it fire at
+        <input
+          type="datetime-local"
+          value={value}
+          onChange={(event) => setValue(event.target.value)}
+          aria-label="An instant to test against the schedule"
+          className="tabular rounded border border-line px-2 py-1 text-[13px] normal-case tracking-normal text-fg outline-none focus:border-line-strong"
+        />
+        <span className="normal-case tracking-normal">in the schedule&rsquo;s timezone</span>
+      </label>
+
+      {result && (
+        <p className={`mt-2 text-xs ${result.fires ? "text-ok" : "text-muted"}`}>
+          {result.fires ? (
+            "Yes — every field matches that moment."
+          ) : (
+            <>
+              No. Blocked by{" "}
+              {result.blockedBy.map((field, index) => (
+                <span key={field}>
+                  {index > 0 && (index === result.blockedBy.length - 1 ? " and " : ", ")}
+                  <span className="text-err">{FIELD_LABEL[field] ?? field}</span>
+                </span>
+              ))}
+              .
+            </>
+          )}
+        </p>
       )}
     </div>
   );

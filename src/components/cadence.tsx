@@ -10,13 +10,20 @@ import { Panel } from "@/components/ui/panel";
 import { Button, Kbd, Tabs } from "@/components/ui/controls";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { CronError, parseCron, type CronExpression } from "@/lib/cron/parse";
-import { describeCadence, detectOverlap, nextRuns, previousRun, relativeTime } from "@/lib/cron/schedule";
+import {
+  describeCadence,
+  detectOverlap,
+  firesAt,
+  nextRuns,
+  previousRun,
+  relativeTime,
+} from "@/lib/cron/schedule";
 import { snippetsFor } from "@/lib/cron/export";
 import { ExportPanel } from "@/components/export-panel";
 import { BuilderPanel } from "@/components/builder-panel";
 import { DEFAULT_BUILDER, fromExpression, toExpression, type BuilderState } from "@/lib/cron/builder";
 import { describeCron, scheduleNotes, summariseFields } from "@/lib/cron/describe";
-import { isValidZone, localZone } from "@/lib/zones";
+import { instantFromWallClock, isValidZone, localZone } from "@/lib/zones";
 
 const RUN_COUNT = 24;
 
@@ -103,6 +110,26 @@ export function Cadence() {
     if (builderFromExpression) setBuilder(builderFromExpression);
   }, [builderFromExpression]);
 
+  // The input gives a wall-clock string; it is judged in the schedule's own
+  // timezone, which is the only reading that answers the question honestly.
+  const checkFireTime = useCallback(
+    (localDateTime: string) => {
+      if (!parsed.expr) return null;
+      const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(localDateTime);
+      if (!match) return null;
+      const [, year, month, day, hour, minute] = match.map(Number) as number[];
+      const instant = instantFromWallClock(timeZone, {
+        year: year!,
+        month: month!,
+        day: day!,
+        hour: hour!,
+        minute: minute!,
+      });
+      return firesAt(parsed.expr, instant, timeZone);
+    },
+    [parsed.expr, timeZone],
+  );
+
   const fields = useMemo(() => (parsed.expr ? summariseFields(parsed.expr) : []), [parsed.expr]);
   const notes = useMemo(() => (parsed.expr ? scheduleNotes(parsed.expr) : []), [parsed.expr]);
   const description = parsed.expr ? describeCron(parsed.expr) : null;
@@ -182,6 +209,7 @@ export function Cadence() {
                 cadence={cadence}
                 overlap={overlap}
                 jobMinutes={jobMinutes}
+                onCheck={checkFireTime}
               />
             )}
             {view === "build" && (
