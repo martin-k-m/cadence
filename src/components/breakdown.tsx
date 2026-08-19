@@ -116,7 +116,11 @@ function FireChecker({ onCheck }: { onCheck: (localDateTime: string) => FireChec
       </label>
 
       {result && (
-        <p className={`mt-2 text-xs ${result.fires ? "text-ok" : "text-muted"}`}>
+        <p
+          role="status"
+          aria-live="polite"
+          className={`mt-2 text-xs ${result.fires ? "text-ok" : "text-muted"}`}
+        >
           {result.fires ? (
             "Yes — every field matches that moment."
           ) : (

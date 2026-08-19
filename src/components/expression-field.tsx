@@ -51,6 +51,7 @@ export function ExpressionField({ value, onChange, error, description }: Express
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 4 }}
             transition={{ duration: 0.15 }}
+            role="alert"
             className="border-t border-line bg-err/[0.06] px-4 py-2.5 text-[13px] text-err"
           >
             {error.message}
@@ -62,6 +63,8 @@ export function ExpressionField({ value, onChange, error, description }: Express
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 4 }}
             transition={{ duration: 0.15 }}
+            role="status"
+            aria-live="polite"
             className="border-t border-line px-4 py-2.5 text-[15px] text-fg"
           >
             {description}
