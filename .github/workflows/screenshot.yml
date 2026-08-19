@@ -19,6 +19,8 @@ concurrency:
 jobs:
   capture:
     runs-on: ubuntu-latest
+    # A stuck step should fail the run rather than occupy a runner for an hour.
+    timeout-minutes: 12
     if: >-
       github.event_name == 'workflow_dispatch' ||
       github.event.workflow_run.conclusion == 'success'
@@ -48,7 +50,11 @@ jobs:
           key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
 
       - name: Install Chromium
-        run: npx playwright install --with-deps chromium
+        timeout-minutes: 6
+        # No --with-deps: that shells out to apt, which hung for an hour on a
+        # cold cache, and the ubuntu-latest image already carries the libraries
+        # Chromium needs. --yes stops npx ever pausing for confirmation.
+        run: npx --yes playwright install chromium
 
       - name: Build static export
         run: npm run build
