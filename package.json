@@ -12,7 +12,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "screenshot": "node scripts/screenshot.mjs"
+    "screenshot": "node scripts/screenshot.mjs",
+    "audit": "node scripts/audit.mjs"
   },
   "dependencies": {
     "motion": "^12.23.12",
@@ -21,6 +22,7 @@
     "react-dom": "19.1.1"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
     "@eslint/eslintrc": "^3.3.1",
     "@tailwindcss/postcss": "^4.1.12",
     "@types/node": "^24.3.0",

@@ -36,7 +36,13 @@ export function RunsList({ runs, timeZone, now, showUtc }: RunsListProps) {
   });
 
   return (
-    <ol className="h-full overflow-auto">
+    <ol
+      className="h-full overflow-auto"
+      // A scrollable region needs to be focusable, or it cannot be scrolled
+      // without a pointing device.
+      tabIndex={0}
+      aria-label="Upcoming runs"
+    >
       {runs.map((run, index) => {
         const parts = zonedParts(timeZone, run.instant);
         const newDay = dayKeys[index] !== dayKeys[index - 1];

@@ -117,6 +117,22 @@ npx vercel --prod
 Or import it through the dashboard:
 <https://vercel.com/import/git?s=https://github.com/martin-k-m/cadence>
 
+## Accessibility
+
+Every build runs [axe-core](https://github.com/dequelabs/axe-core) against the
+real static export, in **both themes at desktop and phone width**, and fails on
+any serious or critical violation. It also checks that the page does not scroll
+sideways at 375px, because that is a layout bug rather than a matter of taste.
+
+Introducing it found genuine defects: text tokens below the 4.5:1 contrast
+threshold, a scrollable region that could not be reached by keyboard, and status
+colours that were only ever defined for the dark theme — so light mode was
+rendering pale amber on white.
+
+```bash
+npm run audit
+```
+
 ## Development
 
 ```bash

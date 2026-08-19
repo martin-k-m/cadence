@@ -85,3 +85,40 @@ jobs:
             git pull --rebase --autostash origin main
           done
           exit 1
+
+  # Accessibility and layout are checked against the built export, in both
+  # themes and at phone width, so a contrast or overflow regression fails the
+  # build rather than waiting for someone to notice.
+  accessibility:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      TZ: UTC
+      GITHUB_PAGES: "true"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      - name: Install Chromium
+        timeout-minutes: 6
+        run: npx --yes playwright install chromium
+
+      - name: Build static export
+        run: npm run build
+
+      - name: Audit
+        run: npm run audit

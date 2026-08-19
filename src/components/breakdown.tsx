@@ -22,7 +22,7 @@ export function Breakdown({ fields, notes, cadence, overlap, jobMinutes, onCheck
   const reduce = useReducedMotion();
 
   return (
-    <div className="h-full overflow-auto">
+    <div className="h-full overflow-auto" tabIndex={0} aria-label="Field breakdown">
       <table className="w-full">
         <tbody>
           {fields.map((field, index) => (
