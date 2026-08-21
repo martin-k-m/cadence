@@ -129,7 +129,13 @@ threshold, a scrollable region that could not be reached by keyboard, and status
 colours that were only ever defined for the dark theme — so light mode was
 rendering pale amber on white.
 
+The audit reads the built export in `out/` and drives a real Chromium, and
+neither arrives with `npm install`. Both lines below are prerequisites, not
+options:
+
 ```bash
+npx playwright install chromium
+GITHUB_PAGES=true npm run build
 npm run audit
 ```
 
@@ -143,6 +149,7 @@ npm run dev
 ```bash
 npm test
 npm run typecheck
+npm run lint
 npm run build
 ```
 
