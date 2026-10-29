@@ -40,7 +40,7 @@ jobs:
       # A workflow_run event starts from the default branch, so the commit CI
       # actually validated has to be named explicitly — otherwise a later push
       # could be published on the strength of an earlier commit's green run.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.workflow_run.head_sha || github.ref }}
 
@@ -58,7 +58,7 @@ jobs:
             exit 1
           fi
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: npm
@@ -72,9 +72,9 @@ jobs:
       - name: Keep Pages from running Jekyll over _next
         run: touch out/.nojekyll
 
-      - uses: actions/configure-pages@v5
+      - uses: actions/configure-pages@v6
 
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: out
 
@@ -87,4 +87,4 @@ jobs:
 
     steps:
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
